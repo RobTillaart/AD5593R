@@ -212,8 +212,8 @@ int AD5593R::reset()
 int AD5593R::getTemperature()
 {
   //  see readADC
-  //  0x0100 = TEMPerature include bit
-  writeRegister(AD5593_ADC_SEQ, 0x0100 | (1 << pin));
+  //  0x0100 = TEMPerature include bit, no other ADC's
+  writeRegister(AD5593_ADC_SEQ, 0x0100);
   //  read one ADC conversion.
   return readRegister(AD5593_ADC_READ);
 }

@@ -21,8 +21,8 @@ write8	KEYWORD2
 read8	KEYWORD2
 
 writeDAC	KEYWORD2
+readDAC	KEYWORD2
 readADC	KEYWORD2
-
 
 setExternalReference	KEYWORD2
 powerDown	KEYWORD2

@@ -57,6 +57,7 @@ This library does **not** support the AD5592 / SPI version.
 ### Related
 
 - https://github.com/RobTillaart/AD5593R  I2C
+- https://www.analog.com/en/products/ad5593r.html (datasheet)
 
 Where to buy (note it not the cheapest device)
 
@@ -164,7 +165,8 @@ The user needs to handle the pin administration.
 
 TODO: output / input range VREF x 2.
 
-### External reference
+
+### External reference and power
 
 - **int setExternalReference(bool flag)** selects internal 2.5V or 
 external reference voltage.
@@ -178,6 +180,16 @@ external reference voltage.
 Should return value between −40 +105 (not accurate)
 
 
+### Low level
+
+Full control of the registers, read the datasheet for the details.
+
+Might move to protected in the future.
+
+- **int writeRegister(uint8_t reg, uint16_t data)**
+- **uint16_t readRegister(uint8_t reg)**
+
+
 ## Future
 
 
@@ -186,10 +198,12 @@ Should return value between −40 +105 (not accurate)
 - improve documentation
 - buy hardware for testing.
 - verify (and fix) basic functions.
+- check TODO's in code.
 
 #### Should
 
 - add missing functionality (after basic functions confirmed OK).
+- input output range VREF x 2
 - **writeNOP()** + **readNOP()** what is the function of NOP register?
 - **GEN_CTRL_REG** Page 33
 - **LDAC_MODE** Page 24/37 => latch the DAC outputs simultaneously (or not).

@@ -10,5 +10,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - initial version
 
 ## [0.0.0] - 2024-01-30
-- start develop
+- start development (low prio)
 

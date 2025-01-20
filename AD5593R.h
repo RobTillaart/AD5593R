@@ -48,11 +48,13 @@ public:
   uint16_t readDAC(uint8_t pin);
   uint16_t readADC(uint8_t pin);
 
-  //  OTHER
+  //  External reference and power
   //  power on = internal reference 2.5V
   int      setExternalReference(bool flag);
   int      powerDown();
   int      wakeUp();
+  
+  //  OTHER
   //  reset
   int     reset();
   //  temperature
