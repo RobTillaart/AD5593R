@@ -41,8 +41,8 @@ unittest_teardown()
 unittest(test_constants)
 {
   assertEqual(0x0000, AD5593R_OK);
-  assertEqual(0xFF81, AD5593R_PIN_ERROR0xFF81);
-  assertEqual(0xFF82, AD5593R_I2C_ERROR0xFF82);
+  assertEqual(0xFF81, AD5593R_PIN_ERROR);
+  assertEqual(0xFF82, AD5593R_I2C_ERROR);
 }
 
 
