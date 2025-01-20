@@ -38,11 +38,19 @@ unittest_teardown()
 }
 
 
-unittest(test_begin)
+unittest(test_constants)
 {
-  AD5593R ad;
+  assertEqual(0x0000, AD5593R_OK);
+  assertEqual(0xFF81, AD5593R_PIN_ERROR0xFF81);
+  assertEqual(0xFF82, AD5593R_I2C_ERROR0xFF82);
+}
 
-  assertEqual(1, 1);
+
+unittest(test_getAddress)
+{
+  AD5593R ad(0x08);
+
+  assertEqual(0x08, ad.getAddress());
 }
 
 
