@@ -24,12 +24,12 @@
 #include <ArduinoUnitTests.h>
 
 #include "Arduino.h"
-#include "AD5933R.h"
+#include "AD5593R.h"
 
 
 unittest_setup()
 {
-  fprintf(stderr, "AD5933R_LIB_VERSION:\t%s\n", (char *) AD5933R_LIB_VERSION);
+  fprintf(stderr, "AD5593R_LIB_VERSION:\t%s\n", (char *) AD5593R_LIB_VERSION);
 }
 
 
@@ -40,7 +40,7 @@ unittest_teardown()
 
 unittest(test_begin)
 {
-  AD5933R ad;
+  AD5593R ad;
 
   assertEqual(1, 1);
 }
