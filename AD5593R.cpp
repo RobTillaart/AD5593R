@@ -1,7 +1,7 @@
 //
 //    FILE: AD5593R.cpp
 //  AUTHOR: Rob Tillaart
-// VERSION: 0.1.0
+// VERSION: 0.1.1
 //    DATE: 2024-01-30
 // PURPOSE: Arduino library for AD5593R, I2C, 8 channel ADC / DAC / GPIO device.
 //     URL: https://github.com/RobTillaart/AD5593R
@@ -42,20 +42,17 @@ AD5593R::AD5593R(const uint8_t deviceAddress, TwoWire *wire)
   _error      = AD5593R_OK;
 }
 
-
 bool AD5593R::begin()
 {
   if (! isConnected()) return false;
   return true;
 }
 
-
 bool AD5593R::isConnected()
 {
   _wire->beginTransmission(_address);
   return ( _wire->endTransmission() == 0);
 }
-
 
 uint8_t AD5593R::getAddress()
 {

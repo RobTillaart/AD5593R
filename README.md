@@ -58,6 +58,10 @@ This library does **not** support the AD5592 / SPI version.
 
 - https://github.com/RobTillaart/AD5593R  I2C
 - https://www.analog.com/en/products/ad5593r.html (datasheet)
+- https://github.com/RobTillaart/ADS1x15 12 & 16 bit ADC, I2C, slow
+- https://github.com/RobTillaart/MCP_ADC 10-12 bit, 1,2,4,8 channel ADC
+- https://github.com/RobTillaart/MCP_DAC 10-12 bit, 1,2,4,8 channel ADC
+- https://github.com/RobTillaart/PCF8591 8 bit ADC + 1 bit DAC
 
 Where to buy (note it not the cheapest device)
 
@@ -75,6 +79,9 @@ Connections see datasheet, depends on packaging type.
 ### I2C address
 
 The AD5593R has one address line A0, which allows two addresses 0x08 or 0x09.
+
+In issue #2 an AD5593R with address 10 was seen, cause unknown. SO if your
+device is not seen on as 8 or 9, you might check 10 (or 11).
 
 
 ### I2C Performance
