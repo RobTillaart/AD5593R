@@ -223,6 +223,7 @@ int AD5593R::getTemperature()
 //
 //  PROTECTED
 //
+//  Figure 36, page 20
 int AD5593R::writeRegister(uint8_t reg, uint16_t data)
 {
   _wire->beginTransmission(_address);

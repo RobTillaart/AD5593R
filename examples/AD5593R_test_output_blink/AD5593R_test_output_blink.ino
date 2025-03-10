@@ -1,7 +1,7 @@
 //
-//    FILE: AD5593R_AD5593R_test_adc.ino
+//    FILE: AD5593R_test_output_blink.ino
 //  AUTHOR: Rob Tillaart
-// PURPOSE: test adc mode
+// PURPOSE: test output mode
 //     URL: https://github.com/RobTillaart/AD5593R
 
 
@@ -10,6 +10,7 @@
 
 AD5593R AD(0x10);
 
+uint8_t flag = HIGH;
 
 void setup()
 {
@@ -22,8 +23,9 @@ void setup()
   Serial.println();
 
   Wire.begin();
-  //  set all eight pins to ADC mode.
-  AD.setADCmode(0xFF);
+
+  //  set all eight pins to OUTPUT mode.
+  AD.setOUTPUTmode(0xFF);
 }
 
 
@@ -31,10 +33,13 @@ void loop()
 {
   for (int pin = 0; pin < 8; pin++)
   {
-    Serial.print(AD.readADC(pin));
+    Serial.print(AD.write1(pin, flag));
     Serial.print("\t");
   }
   Serial.println();
+  //  toggle blink flag.
+  if (flag == HIGH) flag = LOW;
+  else flag = HIGH;
   delay(1000);
 }
 
