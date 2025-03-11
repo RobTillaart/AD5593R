@@ -24,6 +24,7 @@
 #define AD5593_POWERDOWN_REF_CTRL       0x0B
 #define AD5593_GPIO_OPENDRAIN_CONFIG    0x0C
 #define AD5593_IO_TS_CONFIG             0x0D
+
 #define AD5593_SW_RESET                 0x0F
 
 //  IO REGISTERS
@@ -59,10 +60,67 @@ uint8_t AD5593R::getAddress()
   return _address;
 }
 
+
+////////////////////////////////////////////////////////////
+//
+//  CONFIGURE ADC / DAC RANGE
+//
+int AD5593R::setADCRange2x(bool flag)
+{
+  uint16_t bitMask = readRegister(AD5593_GEN_CTRL_REG);
+  if (flag) bitMask |= 0x0020;
+  else bitMask &= ~0x0020;
+  return writeRegister(AD5593_GEN_CTRL_REG, bitMask);
+}
+
+int AD5593R::setDACRange2x(bool flag)
+{
+  uint16_t bitMask = readRegister(AD5593_GEN_CTRL_REG);
+  if (flag) bitMask |= 0x0010;
+  else bitMask &= ~0x0010;
+  return writeRegister(AD5593_GEN_CTRL_REG, bitMask);
+}
+
+
 ////////////////////////////////////////////////////////////
 //
 //  MODE
 //
+int AD5593R::setMode(const char config[9])
+{
+  //  all channels need to be addressed
+  if (strlen(config) != 8) return -1;
+  uint8_t bitMaskDAC = 0x00;
+  uint8_t bitMaskADC = 0x00;
+  uint8_t bitMaskIn  = 0x00;
+  uint8_t bitMaskOut = 0x00;
+
+  //  parse configuration string.
+  uint8_t bm = 0x01;
+  for (int i = 0; i < 8; i++)
+  {
+    switch(config[i])
+    {
+      case 'a':
+      case 'A': bitMaskADC |= bm; break;
+      case 'd':
+      case 'D': bitMaskDAC |= bm; break;
+      case 'i':
+      case 'I': bitMaskIn  |= bm; break;
+      case 'o':
+      case 'O': bitMaskOut |= bm; break;
+      default:  break;
+    }
+    bm <<= 1;
+  }
+  //  TODO handle return values.
+  setADCmode(bitMaskADC);
+  setDACmode(bitMaskDAC);
+  setINPUTmode(bitMaskIn);
+  setOUTPUTmode(bitMaskOut);
+  return 0;
+}
+
 int AD5593R::setADCmode(uint8_t bitMask)
 {
   //  Page 25 / 32
@@ -100,14 +158,24 @@ int AD5593R::setPULLDOWNmode(uint8_t bitMask)
   return writeRegister(AD5593_PULLDOWN_CONFIG, bitMask);
 }
 
+//  TODO - latch / direct DAC.
+//  int AD5593R::setLDACmode( ??? );
+//  check DAC pins?
+
+//  TODO - opendrain - output mode - page 26 - pull up resistor needed.
+//  int AD5593R::setOpenDrainMode( ??? );
+//  check output pins?
+
 
 ////////////////////////////////////////////////////////////
 //
 //  DIGITAL
 //
+//  Page 26
 uint16_t AD5593R::write1(uint8_t pin, uint8_t value)
 {
   if (pin > 7) return AD5593R_PIN_ERROR;
+  //  TODO does the read works?
   uint8_t bitMask = readRegister(AD5593_GPIO_OUTPUT);
   if (value == LOW) bitMask &= ~(1 << pin);
   else              bitMask |= (1 << pin);
@@ -139,7 +207,13 @@ uint16_t AD5593R::read8()
 uint16_t AD5593R::writeDAC(uint8_t pin, uint16_t value)
 {
   if (pin > 7) return AD5593R_PIN_ERROR;
-  if (value > 0x0FFF) value = 0x0FFF;   //  TODO document choice.
+  //  max 12 bit == 4095 => clipping
+  if (value > 0x0FFF)
+  {
+    value = 0x0FFF;
+  }
+  //  TODO do we need this?
+  //  return writeRegister(AD5593_DAC_WRITE(pin), value | 0x8000 | (pin << 12));
   return writeRegister(AD5593_DAC_WRITE(pin), value);
 }
 
@@ -155,8 +229,19 @@ uint16_t AD5593R::readADC(uint8_t pin)
   //  add all to the sequence including temperature.
   //  0x0200 = REPeat bit
   //  0x0100 = TEMPerature include bit
-  writeRegister(AD5593_ADC_SEQ, 0x0000 | (1 << pin));
+  //  TODO  0x0000 or 0x0200?
+  writeRegister(AD5593_ADC_SEQ, 0x0200 | (1 << pin));
   //  read one ADC conversion.
+  return readRegister(AD5593_ADC_READ);
+}
+
+uint16_t AD5593R::readTemperature()
+{
+  //  0x0200 = REPeat bit
+  //  0x0100 = TEMPerature include bit
+  writeRegister(AD5593_ADC_SEQ, 0x0300);
+  //  read one ADC conversion.
+  //  TODO mapping to °C
   return readRegister(AD5593_ADC_READ);
 }
 
@@ -165,12 +250,20 @@ uint16_t AD5593R::readADC(uint8_t pin)
 //
 //  V-REFERENCE
 //
-int AD5593R::setExternalReference(bool flag)
+int AD5593R::setExternalReference(bool flag, float Vref)
 {
   //  Page 40
   uint8_t bitMask = readRegister(AD5593_POWERDOWN_REF_CTRL);
-  if (flag) bitMask &= ~(0x0200);
-  else      bitMask |= (0x0200);
+  if (flag)  //  external
+  {
+    bitMask &= ~0x0200;
+    _Vref = Vref;
+  }
+  else       //  internal
+  {
+    bitMask |= 0x0200;
+    _Vref = 2.5;
+  }
   return writeRegister(AD5593_POWERDOWN_REF_CTRL, bitMask);
 }
 
@@ -178,17 +271,24 @@ int AD5593R::powerDown()
 {
   //  Page 40
   uint8_t bitMask = readRegister(AD5593_POWERDOWN_REF_CTRL);
-  bitMask |= (0x0400);
+  bitMask |= 0x0400;
   return writeRegister(AD5593_POWERDOWN_REF_CTRL, bitMask);
 }
 
 int AD5593R::wakeUp()
 {
+  _Vref = 2.5;
   //  Page 40
   uint8_t bitMask = readRegister(AD5593_POWERDOWN_REF_CTRL);
-  bitMask &= ~(0x0400);
+  bitMask &= ~0x0400;
   return writeRegister(AD5593_POWERDOWN_REF_CTRL, bitMask);
 }
+
+//  TODO
+//int AD5593R::powerDownDacChannel(uint8_t channel)
+//{
+//  Page 40
+//}
 
 
 ////////////////////////////////////////////////////////////
@@ -199,20 +299,7 @@ int AD5593R::reset()
 {
   //  page 19
   return writeRegister(AD5593_SW_RESET, 0x0DAC);
-}
-
-
-////////////////////////////////////////////////////////////
-//
-//  TEMPERATURE
-//
-int AD5593R::getTemperature()
-{
-  //  see readADC
-  //  0x0100 = TEMPerature include bit, no other ADC's
-  writeRegister(AD5593_ADC_SEQ, 0x0100);
-  //  read one ADC conversion.
-  return readRegister(AD5593_ADC_READ);
+  _Vref = 2.5;
 }
 
 

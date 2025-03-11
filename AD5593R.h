@@ -31,34 +31,59 @@ public:
   uint8_t  getAddress();
 
   //  mode
+  //  A=ADC, D=DAC, I=INPUT, O=OUTPUT e.g. "AADDIIOO"
+  int      setMode(const char config[9]);
+  //  TODO getMode(char config[9]);
   int      setADCmode(uint8_t bitMask);
   int      setDACmode(uint8_t bitMask);
   int      setINPUTmode(uint8_t bitMask);
   int      setOUTPUTmode(uint8_t bitMask);
+
+  //  TODO for INPUT only?
   int      setPULLDOWNmode(uint8_t bitMask);
 
+  //  TODO - latch / direct DAC.
+  //  int setLDACmode( ??? );
+  //  TODO - opendrain - output mode - page 26 - pull up resistor needed.
+  //  int setOpenDrainMode( ??? );
+
+
   //  digital
+  //  pin = 0..7, value = LOW or HIGH
   uint16_t write1(uint8_t pin, uint8_t value);
   uint16_t read1(uint8_t pin);
   uint16_t write8(uint8_t bitMask);
   uint16_t read8();
 
+
+  //  External reference
+  //  power on = internal reference 2.5V
+  //  true = external reference, false = internal reference.
+  int      setExternalReference(bool flag, float Vref);
+  float    getVref();
+  //  configure ADC / DAC range
+  //  false = 1x Vref or true = 2x Vref.
+  int      setADCRange2x(bool flag);
+  int      setDACRange2x(bool flag);
+
+
   //  analog
   uint16_t writeDAC(uint8_t pin, uint16_t value);
   uint16_t readDAC(uint8_t pin);
   uint16_t readADC(uint8_t pin);
+  uint16_t readTemperature();  //  Page 19.  accuracy 3C over 5 samples averaged.
 
-  //  External reference and power
+
+  //  power
   //  power on = internal reference 2.5V
-  int      setExternalReference(bool flag);
   int      powerDown();
   int      wakeUp();
-  
-  //  OTHER
+  //  int powerDownDacChannel(uint8_t channel);  Page 40.
+
+
   //  reset
-  int     reset();
-  //  temperature
-  int      getTemperature();  //  Page 19.  accuracy 3C over 5 samples averaged.
+  int      reset();
+
 
   //  LOW LEVEL access for full control
   int      writeRegister(uint8_t reg, uint16_t data);
@@ -67,6 +92,7 @@ public:
 protected:
   uint8_t _address;
   int     _error;
+  float   _Vref = 2.5;
 
   TwoWire*  _wire;
 };

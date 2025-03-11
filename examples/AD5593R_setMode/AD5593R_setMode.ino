@@ -1,7 +1,7 @@
 //
-//    FILE: AD5593R_test_adc.ino
+//    FILE: AD5593R_setMode.ino
 //  AUTHOR: Rob Tillaart
-// PURPOSE: test adc mode
+// PURPOSE: test setMode
 //     URL: https://github.com/RobTillaart/AD5593R
 
 
@@ -10,10 +10,11 @@
 
 AD5593R AD(0x10);
 
+uint16_t n = 0;
 
 void setup()
 {
-  while(!Serial);
+  while (!Serial);
   Serial.begin(115200);
   Serial.println();
   Serial.println(__FILE__);
@@ -22,19 +23,33 @@ void setup()
   Serial.println();
 
   Wire.begin();
-  //  set all eight pins to ADC mode.
-  AD.setADCmode(0xFF);
+
+  Serial.println(AD.begin());
+
+  //  set pin 0,1,2 as ADC, pin 3 as DAC and pin 4,5,6,7 as OUTPUT
+  AD.setMode("AAADOOOO");
 }
 
 
 void loop()
 {
-  for (int pin = 0; pin < 8; pin++)
+  //  just do something.
+  for (int pin = 0; pin < 3; pin++)
   {
     Serial.print(AD.readADC(pin));
     Serial.print("\t");
   }
+
+  n = (n + 101) % 4095;
+  AD.writeDAC(4, n);
+  Serial.print(n);
+  Serial.print("\t");
+  for (int pin = 4; pin < 8; pin++)
+  {
+    AD.write1(pin, n & 0x01);
+  }
   Serial.println();
+
   delay(1000);
 }
 

@@ -51,7 +51,8 @@ As always, feedback is welcome.
 
 The AD5592 is an almost identical device with a SPI interface.
 The AD5592 has no RESET pin.
-This library does **not** support the AD5592 / SPI version.
+This library does **not** support the AD5592 / SPI version.  
+(If this AD5593R works well, I might investigate the SPI version)
 
 
 ### Related
@@ -78,10 +79,12 @@ Connections see datasheet, depends on packaging type.
 
 ### I2C address
 
-The AD5593R has one address line A0, which allows two addresses 0x08 or 0x09.
+The AD5593R has one address line A0, which allows two addresses 0x10 or 0x11.
 
-In issue #2 an AD5593R with address 10 was seen, cause unknown. SO if your
-device is not seen on as 8 or 9, you might check 10 (or 11).
+It is possible to use the A0 line as a CS (chip select) line and configure all
+devices as 0x11. 
+By setting a single A0 line HIGH the related AD5593R device will be selected. 
+This works if you have enough IO pins. Alternative is I2C multiplexing see below.
 
 
 ### I2C Performance
@@ -143,22 +146,46 @@ The user needs to handle the pin administration.
 
 The pinMode must be set before one can do IO.
 
-- **int setADCmode(uint8_t bitMask)** set pins == 1 to ADC mode (12 bit).
+- **int setMode(char config[9])** simple configuration by means of a char array.
+A=ADC, D=DAC, I=INPUT, O=OUTPUT e.g. **setMode("AADDIIOO")** configures all 
+eight pins with an unique function.
+The char array must be 8 characters long, other characters set that pin as not configured.
+The char array is not case sensitive.
+- **int setADCmode(uint8_t bitMask)** set pins == 1 to ADC mode (12 bits).
 - **int setDACmode(uint8_t bitMask)** set pins == 1 to DAC mode (12 bits).
 - **int setINPUTmode(uint8_t bitMask)** set pins == 1 to INPUT mode.
 - **int setOUTPUTmode(uint8_t bitMask)** set pins == 1 to OUTPUT mode.
+
+
 - **int setPULLDOWNmode(uint8_t bitMask)** 85 kOhm pull down to GND.
 
+```
+//  NIY
+//  setLDACmode()
+//  setOpenDrainMode()
+```
 
 ### Digital IO
 
 The pins used must be set in the proper INPUT or OUTPUT mode.  
 The user needs to handle the pin administration.
 
-- **uint16_t write1(uint8_t pin, uint8_t value)** write HIGH/LOW to pin.
-- **uint16_t write8(uint8_t bitMask)** write bitMask to all pins, 1 == HIGH, 0 == LOW
-- **uint16_t read1(uint8_t pin)**
-- **uint16_t read8()**
+- **uint16_t write1(uint8_t pin, uint8_t value)** write HIGH/LOW to an OUTPUT pin.
+- **uint16_t write8(uint8_t bitMask)** write bitMask to all pins, 1 == HIGH, 0 == LOW.
+This is faster than writing the individual pins.
+- **uint16_t read1(uint8_t pin)** read a single pin, returns HIGH (1) or LOW (0).
+- **uint16_t read8()** reads all INPUT pins at once, returns a bit mask with the
+value of the individual pins.
+
+
+### Configuration Analog IO
+
+- **int setExternalReference(bool flag, float Vref)** true = external reference,
+false = internal reference of 2.5 Volts. The Vref has no meaning when internal 
+reference is selected.
+- **float getVref()** returns the current reference voltage.
+- **int setADCRange2x(bool flag)** Configures the ADC range 1x or 2x the Vref.
+- **int setDACRange2x(bool flag)** Configures the DAC range 1x or 2x the Vref.
 
 
 ### Analog IO
@@ -166,11 +193,12 @@ The user needs to handle the pin administration.
 The pins used must be set in the proper DAC or ADC mode.  
 The user needs to handle the pin administration.
 
-- **uint16_t writeDAC(uint8_t pin, uint16_t value)** value must be 0..4095 (12 bit).
+- **uint16_t writeDAC(uint8_t pin, uint16_t value)** value must be 0..4095 (12 bit). Values above 4095 will be clipped to 4095.
 - **uint16_t readDAC(uint8_t pin)** returns current value of selected DAC.
 - **uint16_t readADC(uint8_t pin)** returns 12 bit value.
-
-TODO: output / input range VREF x 2.
+- **uint16_t readTemperature()** TODO: 
+Accuracy 3C over 5 samples averaged according datasheet.
+Should return value between −40 +105 (not accurate)
 
 
 ### External reference and power
@@ -180,11 +208,10 @@ external reference voltage.
 - **int powerDown()** switches of all functionality, Low power mode.
 - **int wakeUp()** switches on all functionality.
 
-### Other
+
+### Reset
 
 - **int reset()** triggers a power on reset, note the Vref is reset to internal 2.5V.
-- **int getTemperature()** dummy for now.  
-Should return value between −40 +105 (not accurate)
 
 
 ### Low level
@@ -202,29 +229,39 @@ Might move to protected in the future.
 
 #### Must
 
-- improve documentation
-- buy hardware for testing.
+- improve documentation.
+- get hardware for testing.
 - verify (and fix) basic functions.
-- check TODO's in code.
+- check TODO's in code and documentation
 
 #### Should
 
 - add missing functionality (after basic functions confirmed OK).
-- input output range VREF x 2
 - **writeNOP()** + **readNOP()** what is the function of NOP register?
-- **GEN_CTRL_REG** Page 33
+- **GEN_CTRL_REG** Page 33 - bits 6789.
 - **LDAC_MODE** Page 24/37 => latch the DAC outputs simultaneously (or not).
+0x07 - set Latch / direct.
+- **OPENDRAIN** configuration 0x0C - output mode.
+- **ThreeState register** AD5593_IO_TS_CONFIG
+- **powerDownDacChannel(uint8_t channel)** page 40
+- error handling.
 - possibly more...
 
 #### Could
 
+- logical group functionality (code / docs).
 - read multiple ADC in one call, page 25.
 - continuous ADC conversions.
 - add examples
-- unit tests? 
-- support external reset pin?
+- example with A0 line as ChipSelect.
+- support external reset pin - user can do this relative easy.
+  - effect on internals?
 
-#### Wont
+#### Wont (for now).
+
+- extend unit tests - needs mock-up device.
+- **int writeDACVoltage(pin, voltage)** - depends on Vref.
+- **float readADCVoltage()** 
 
 
 ## Support
