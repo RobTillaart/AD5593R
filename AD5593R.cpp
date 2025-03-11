@@ -324,7 +324,7 @@ uint16_t AD5593R::readRegister(uint8_t reg)
   _wire->beginTransmission(_address);
   _wire->write(reg);
   _error = _wire->endTransmission();
-  if (_wire->requestFrom(_address, (uint8_t)2) != 2)
+  if (_wire->requestFrom(_address, (uint8_t)2, (uint8_t)1) != 2)
   {
     _error = AD5593R_I2C_ERROR;
     return 0;
