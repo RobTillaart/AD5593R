@@ -28,7 +28,7 @@ void setup()
 
   //  set all eight pins to DAC mode.
   AD.setDACmode(0xFF);
-  AD.setExternalReference(true);
+  AD.setExternalReference(true, 3.3);
 }
 
 
