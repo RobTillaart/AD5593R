@@ -67,7 +67,7 @@ uint8_t AD5593R::getAddress()
 //
 int AD5593R::setADCRange2x(bool flag)
 {
-  uint16_t bitMask = readRegister(AD5593_GEN_CTRL_REG);
+  uint16_t bitMask = readConfigRegister(AD5593_GEN_CTRL_REG);
   if (flag) bitMask |= 0x0020;
   else bitMask &= ~0x0020;
   return writeRegister(AD5593_GEN_CTRL_REG, bitMask);
@@ -75,7 +75,7 @@ int AD5593R::setADCRange2x(bool flag)
 
 int AD5593R::setDACRange2x(bool flag)
 {
-  uint16_t bitMask = readRegister(AD5593_GEN_CTRL_REG);
+  uint16_t bitMask = readConfigRegister(AD5593_GEN_CTRL_REG);
   if (flag) bitMask |= 0x0010;
   else bitMask &= ~0x0010;
   return writeRegister(AD5593_GEN_CTRL_REG, bitMask);
@@ -176,7 +176,7 @@ uint16_t AD5593R::write1(uint8_t pin, uint8_t value)
 {
   if (pin > 7) return AD5593R_PIN_ERROR;
   //  TODO does the read works?
-  uint8_t bitMask = readRegister(AD5593_GPIO_OUTPUT);
+  uint16_t bitMask = readConfigRegister(AD5593_GPIO_OUTPUT);
   if (value == LOW) bitMask &= ~(1 << pin);
   else              bitMask |= (1 << pin);
   return writeRegister(AD5593_GPIO_OUTPUT, bitMask);
@@ -185,7 +185,7 @@ uint16_t AD5593R::write1(uint8_t pin, uint8_t value)
 uint16_t AD5593R::read1(uint8_t pin)
 {
   if (pin > 7) return AD5593R_PIN_ERROR;
-  uint8_t bitMask = readRegister(AD5593_GPIO_READ);
+  uint16_t bitMask = readIORegister(AD5593_GPIO_READ);
   return (bitMask >> pin) & 0x01;
 }
 
@@ -196,7 +196,7 @@ uint16_t AD5593R::write8(uint8_t bitMask)
 
 uint16_t AD5593R::read8()
 {
-  return readRegister(AD5593_GPIO_READ);
+  return readIORegister(AD5593_GPIO_READ);
 }
 
 
@@ -220,7 +220,7 @@ uint16_t AD5593R::writeDAC(uint8_t pin, uint16_t value)
 uint16_t AD5593R::readDAC(uint8_t pin)
 {
   if (pin > 7) return AD5593R_PIN_ERROR;
-  return readRegister(AD5593_DAC_READ(pin));
+  return readIORegister(AD5593_DAC_READ(pin));
 }
 
 uint16_t AD5593R::readADC(uint8_t pin)
@@ -232,7 +232,7 @@ uint16_t AD5593R::readADC(uint8_t pin)
   //  TODO  0x0000 or 0x0200?
   writeRegister(AD5593_ADC_SEQ, 0x0200 | (1 << pin));
   //  read one ADC conversion.
-  return readRegister(AD5593_ADC_READ);
+  return readIORegister(AD5593_ADC_READ);
 }
 
 uint16_t AD5593R::readTemperature()
@@ -242,7 +242,7 @@ uint16_t AD5593R::readTemperature()
   writeRegister(AD5593_ADC_SEQ, 0x0300);
   //  read one ADC conversion.
   //  TODO mapping to °C
-  return readRegister(AD5593_ADC_READ);
+  return readIORegister(AD5593_ADC_READ);
 }
 
 
@@ -253,7 +253,7 @@ uint16_t AD5593R::readTemperature()
 int AD5593R::setExternalReference(bool flag, float Vref)
 {
   //  Page 40
-  uint8_t bitMask = readRegister(AD5593_POWERDOWN_REF_CTRL);
+  uint16_t bitMask = readConfigRegister(AD5593_POWERDOWN_REF_CTRL);
   if (flag)  //  external
   {
     bitMask &= ~0x0200;
@@ -270,7 +270,7 @@ int AD5593R::setExternalReference(bool flag, float Vref)
 int AD5593R::powerDown()
 {
   //  Page 40
-  uint8_t bitMask = readRegister(AD5593_POWERDOWN_REF_CTRL);
+  uint16_t bitMask = readConfigRegister(AD5593_POWERDOWN_REF_CTRL);
   bitMask |= 0x0400;
   return writeRegister(AD5593_POWERDOWN_REF_CTRL, bitMask);
 }
@@ -279,7 +279,7 @@ int AD5593R::wakeUp()
 {
   _Vref = 2.5;
   //  Page 40
-  uint8_t bitMask = readRegister(AD5593_POWERDOWN_REF_CTRL);
+  uint16_t bitMask = readConfigRegister(AD5593_POWERDOWN_REF_CTRL);
   bitMask &= ~0x0400;
   return writeRegister(AD5593_POWERDOWN_REF_CTRL, bitMask);
 }
@@ -319,7 +319,7 @@ int AD5593R::writeRegister(uint8_t reg, uint16_t data)
 }
 
 
-uint16_t AD5593R::readRegister(uint8_t reg)
+uint16_t AD5593R::readIORegister(uint8_t reg)
 {
   _wire->beginTransmission(_address);
   _wire->write(reg);
@@ -333,6 +333,23 @@ uint16_t AD5593R::readRegister(uint8_t reg)
   data += _wire->read();
   return data;
 }
+
+
+uint16_t AD5593R::readConfigRegister(uint8_t reg)
+{
+  _wire->beginTransmission(_address);
+  _wire->write(AD5593_GPIO_READ_CONFIG | reg);
+  _error = _wire->endTransmission();
+  if (_wire->requestFrom(_address, (uint8_t)2, (uint8_t)1) != 2)
+  {
+    _error = AD5593R_I2C_ERROR;
+    return 0;
+  }
+  uint16_t data = _wire->read() << 8;
+  data += _wire->read();
+  return data;
+}
+
 
 //  -- END OF FILE --
 

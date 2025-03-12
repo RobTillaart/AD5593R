@@ -87,7 +87,8 @@ public:
 
   //  LOW LEVEL access for full control
   int      writeRegister(uint8_t reg, uint16_t data);
-  uint16_t readRegister(uint8_t reg);
+  uint16_t readIORegister(uint8_t reg);
+  uint16_t readConfigRegister(uint8_t reg);
 
 protected:
   uint8_t _address;
