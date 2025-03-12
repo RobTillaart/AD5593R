@@ -6,6 +6,8 @@
 //    DATE: 2024-01-30
 // PURPOSE: Arduino library for AD5593R, I2C, 8 channel ADC / DAC / GPIO device.
 //     URL: https://github.com/RobTillaart/AD5593R
+//
+//  read datasheet for details.
 
 
 #include "Arduino.h"
@@ -30,25 +32,30 @@ public:
   bool     isConnected();
   uint8_t  getAddress();
 
-  //  mode
+  //  MODE
   //  A=ADC, D=DAC, I=INPUT, O=OUTPUT e.g. "AADDIIOO"
   int      setMode(const char config[9]);
-  //  TODO getMode(char config[9]);
   int      setADCmode(uint8_t bitMask);
   int      setDACmode(uint8_t bitMask);
   int      setINPUTmode(uint8_t bitMask);
   int      setOUTPUTmode(uint8_t bitMask);
 
-  //  TODO for INPUT only?
+  // PULL DOWN IO - 85 KOhm
   int      setPULLDOWNmode(uint8_t bitMask);
 
-  //  TODO - latch / direct DAC.
-  //  int setLDACmode( ??? );
-  //  TODO - opendrain - output mode - page 26 - pull up resistor needed.
-  //  int setOpenDrainMode( ??? );
+  //  LATCH (dac)
+  //  mode == 0 => COPY input register direct to DAC. (default)
+  //  mode == 1 => HOLD in input registers.
+  //  mode == 2 => RELEASE all input registers to DAC simultaneously.
+  int setLDACmode(uint8_t mode);
+
+  //  OPENDRAIN
+  //  page 26 - output mode - pull up resistor needed.
+  //  bitMask should match output pins.
+  int     setOpenDrainMode(uint8_t bitMask);
 
 
-  //  digital
+  //  DIGITAL IO
   //  pin = 0..7, value = LOW or HIGH
   uint16_t write1(uint8_t pin, uint8_t value);
   uint16_t read1(uint8_t pin);
@@ -56,7 +63,7 @@ public:
   uint16_t read8();
 
 
-  //  External reference
+  //  REFERENCE VOLTAGE VREF
   //  power on = internal reference 2.5V
   //  true = external reference, false = internal reference.
   int      setExternalReference(bool flag, float Vref);
@@ -67,21 +74,24 @@ public:
   int      setDACRange2x(bool flag);
 
 
-  //  analog
+  //  ANALOG IO
   uint16_t writeDAC(uint8_t pin, uint16_t value);
   uint16_t readDAC(uint8_t pin);
   uint16_t readADC(uint8_t pin);
-  uint16_t readTemperature();  //  Page 19.  accuracy 3C over 5 samples averaged.
+  //  temperature page 19.  indicative, accuracy 3C over 5 samples averaged.
+  float readTemperature();
 
 
-  //  power
-  //  power on = internal reference 2.5V
+  //  POWER
+  //  power on => internal reference 2.5V
   int      powerDown();
   int      wakeUp();
-  //  int powerDownDacChannel(uint8_t channel);  Page 40.
+  //  DACs can be separately disabled.
+  int      powerDownDac(uint8_t pin);
+  int      wakeUpDac(uint8_t pin);
 
 
-  //  reset
+  //  RESET
   int      reset();
 
 
@@ -94,6 +104,7 @@ protected:
   uint8_t _address;
   int     _error;
   float   _Vref = 2.5;
+  int     _gain = 1;  //  for temperature.
 
   TwoWire*  _wire;
 };

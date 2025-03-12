@@ -67,6 +67,9 @@ uint8_t AD5593R::getAddress()
 //
 int AD5593R::setADCRange2x(bool flag)
 {
+  if (flag) _gain = 2; 
+  else      _gain = 1;
+
   uint16_t bitMask = readConfigRegister(AD5593_GEN_CTRL_REG);
   if (flag) bitMask |= 0x0020;
   else bitMask &= ~0x0020;
@@ -154,17 +157,23 @@ int AD5593R::setOUTPUTmode(uint8_t bitMask)
 
 int AD5593R::setPULLDOWNmode(uint8_t bitMask)
 {
-  //  page 36
+  //  page 26/36
   return writeRegister(AD5593_PULLDOWN_CONFIG, bitMask);
 }
 
-//  TODO - latch / direct DAC.
-//  int AD5593R::setLDACmode( ??? );
-//  check DAC pins?
+int AD5593R::setLDACmode(uint8_t mode)
+{
+  //  page 24
+  if (mode > 2) return 0;
+  return writeRegister(AD5593_LDAC_MODE, mode);
+}
 
-//  TODO - opendrain - output mode - page 26 - pull up resistor needed.
-//  int AD5593R::setOpenDrainMode( ??? );
-//  check output pins?
+int AD5593R::setOpenDrainMode(uint8_t bitMask)
+{
+  //  Page 26 - output mode
+  return writeRegister(AD5593_GPIO_OPENDRAIN_CONFIG, bitMask);
+}
+
 
 
 ////////////////////////////////////////////////////////////
@@ -212,7 +221,7 @@ uint16_t AD5593R::writeDAC(uint8_t pin, uint16_t value)
   {
     value = 0x0FFF;
   }
-  //  TODO do we need this?
+  //  TODO do we need this or?
   //  return writeRegister(AD5593_DAC_WRITE(pin), value | 0x8000 | (pin << 12));
   return writeRegister(AD5593_DAC_WRITE(pin), value);
 }
@@ -235,14 +244,21 @@ uint16_t AD5593R::readADC(uint8_t pin)
   return readIORegister(AD5593_ADC_READ);
 }
 
-uint16_t AD5593R::readTemperature()
+float AD5593R::readTemperature()
 {
+  //  page 19.
   //  0x0200 = REPeat bit
   //  0x0100 = TEMPerature include bit
   writeRegister(AD5593_ADC_SEQ, 0x0300);
   //  read one ADC conversion.
-  //  TODO mapping to °C
-  return readIORegister(AD5593_ADC_READ);
+  uint16_t raw = readIORegister(AD5593_ADC_READ);
+  //  formulas page 19 refactored into one.
+  float gainVref = _gain * _Vref;
+  float temp = raw - (0.5 * 4095) / gainVref;
+  temp = temp / (2.654 * (2.5 / gainVref));
+  return temp + 25.0;
+  //  could be simplified to T = Ax + B (notes 12/3)
+  //  temp = -283.59 + raw / 6.635 * gainVref;
 }
 
 
@@ -284,11 +300,23 @@ int AD5593R::wakeUp()
   return writeRegister(AD5593_POWERDOWN_REF_CTRL, bitMask);
 }
 
-//  TODO
-//int AD5593R::powerDownDacChannel(uint8_t channel)
-//{
-//  Page 40
-//}
+int AD5593R::powerDownDac(uint8_t pin)
+{
+  //  Page 40
+  if (pin > 7) return 0;
+  uint16_t bitMask = readConfigRegister(AD5593_POWERDOWN_REF_CTRL);
+  bitMask |= (1 << pin);
+  return writeRegister(AD5593_POWERDOWN_REF_CTRL, bitMask);
+}
+
+int AD5593R::wakeUpDac(uint8_t pin)
+{
+  //  Page 40
+  if (pin > 7) return 0;
+  uint16_t bitMask = readConfigRegister(AD5593_POWERDOWN_REF_CTRL);
+  bitMask &= ~(1 << pin);
+  return writeRegister(AD5593_POWERDOWN_REF_CTRL, bitMask);
+}
 
 
 ////////////////////////////////////////////////////////////
@@ -300,6 +328,7 @@ int AD5593R::reset()
   //  page 19
   return writeRegister(AD5593_SW_RESET, 0x0DAC);
   _Vref = 2.5;
+  _gain = 1;
 }
 
 

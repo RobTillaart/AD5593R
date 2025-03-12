@@ -91,9 +91,6 @@ This works if you have enough IO pins. Alternative is I2C multiplexing see below
 
 The AD5593R supports standard mode (100 kHz) and fast mode (400 kHz).
 
-TODO  
-First get library verified, then make the measurements with hardware.
-
 
 ### I2C multiplexing
 
@@ -156,14 +153,18 @@ The char array is not case sensitive.
 - **int setINPUTmode(uint8_t bitMask)** set pins == 1 to INPUT mode.
 - **int setOUTPUTmode(uint8_t bitMask)** set pins == 1 to OUTPUT mode.
 
+Configure detailed pin behaviour.
 
 - **int setPULLDOWNmode(uint8_t bitMask)** 85 kOhm pull down to GND.
+- **int setLDACmode(uint8_t mode)** See table below
+- **int setOpenDrainMode(uint8_t bitMask)** see datasheet page 26.
 
-```
-//  NIY
-//  setLDACmode()
-//  setOpenDrainMode()
-```
+|  mode  |  meaning  |
+|:------:|:----------|
+|   0    |  COPY input register direct to DAC. (default)
+|   1    |  HOLD in input registers.
+|   2    |  RELEASE all input registers to DAC simultaneously.
+
 
 ### Digital IO
 
@@ -178,7 +179,7 @@ This is faster than writing the individual pins.
 value of the individual pins.
 
 
-### Configuration Analog IO
+### Vref Voltage reference
 
 - **int setExternalReference(bool flag, float Vref)** true = external reference,
 false = internal reference of 2.5 Volts. The Vref has no meaning when internal 
@@ -193,25 +194,26 @@ reference is selected.
 The pins used must be set in the proper DAC or ADC mode.  
 The user needs to handle the pin administration.
 
-- **uint16_t writeDAC(uint8_t pin, uint16_t value)** value must be 0..4095 (12 bit). Values above 4095 will be clipped to 4095.
+- **uint16_t writeDAC(uint8_t pin, uint16_t value)** value must be 0..4095 (12 bit). 
+Values above 4095 will be clipped to 4095.
 - **uint16_t readDAC(uint8_t pin)** returns current value of selected DAC.
 - **uint16_t readADC(uint8_t pin)** returns 12 bit value.
-- **uint16_t readTemperature()** TODO: 
-Accuracy 3C over 5 samples averaged according datasheet.
+- **uint16_t readTemperature()** Accuracy 3C over 5 samples averaged according datasheet.
 Should return value between −40 +105 (not accurate)
 
 
-### External reference and power
+### Power
 
-- **int setExternalReference(bool flag)** selects internal 2.5V or 
-external reference voltage.
 - **int powerDown()** switches of all functionality, Low power mode.
 - **int wakeUp()** switches on all functionality.
+- **int powerDownDac(uint8_t pin)** disable single DAC
+- **int wakeUpDac(uint8_t pin)** enable singleDAC
 
 
 ### Reset
 
-- **int reset()** triggers a power on reset, note the Vref is reset to internal 2.5V.
+- **int reset()** triggers a power on reset.
+Note the Vref is reset to internal 2.5V and gain is set to 1x.
 
 
 ### Low level
@@ -221,7 +223,8 @@ Full control of the registers, read the datasheet for the details.
 Might move to protected in the future.
 
 - **int writeRegister(uint8_t reg, uint16_t data)**
-- **uint16_t readRegister(uint8_t reg)**
+- **uint16_t readIORegister(uint8_t reg)**
+- **uint16_t readConfigRegister(uint8_t reg)**
 
 
 ## Future
@@ -232,30 +235,30 @@ Might move to protected in the future.
 - improve documentation.
 - get hardware for testing.
 - verify (and fix) basic functions.
-- check TODO's in code and documentation
+- check and fix TODO's in code and documentation
 
 #### Should
 
 - add missing functionality (after basic functions confirmed OK).
 - **writeNOP()** + **readNOP()** what is the function of NOP register?
 - **GEN_CTRL_REG** Page 33 - bits 6789.
-- **LDAC_MODE** Page 24/37 => latch the DAC outputs simultaneously (or not).
-0x07 - set Latch / direct.
-- **OPENDRAIN** configuration 0x0C - output mode.
 - **ThreeState register** AD5593_IO_TS_CONFIG
-- **powerDownDacChannel(uint8_t channel)** page 40
 - error handling.
-- possibly more...
 
 #### Could
 
 - logical group functionality (code / docs).
+- int getMode(char config[]);
+  - uint8_t getADCmode(), returns bitMask
+  - getDACmode(), getINPUTMode(), getOUTPUTmode() idem.
 - read multiple ADC in one call, page 25.
 - continuous ADC conversions.
 - add examples
-- example with A0 line as ChipSelect.
+  - example with A0 line as ChipSelect.
+  - example LDAC hold / release.
+  - example performance measurements
 - support external reset pin - user can do this relative easy.
-  - effect on internals?
+  - effect on internals of library?
 
 #### Wont (for now).
 
