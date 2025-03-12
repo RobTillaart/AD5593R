@@ -22,7 +22,9 @@ The AD5593R is an IO device with 8 channels that can be configured as ADC
 DAC or GPIO.
 In that sense it is one of the most flexible IO expanders on the market.
 
-The device is **NOT** tested with hardware yet. Feedback welcome.
+The device is **NOT** tested with hardware yet, and the software tests are
+very limited. (Proof is in the pudding test). 
+So all feedback is welcome, please open an issue on GitHub or open an PR.
 
 Both the ADC and DAC are 12 bit, giving 4096 steps, from 0 to 4095.
 The ADC unit is multiplexed over different channels/pins and is rated
@@ -45,6 +47,8 @@ The datasheet mentions a number of suitable external references which
 include the AD780, AD1582, ADR431, REF193, and ADR391.
 
 As always, feedback is welcome.
+
+Also if there is functionality missing, please open an issue on GitHub.
 
 
 ### AD5592 SPI
@@ -144,14 +148,15 @@ The user needs to handle the pin administration.
 The pinMode must be set before one can do IO.
 
 - **int setMode(char config[9])** simple configuration by means of a char array.
-A=ADC, D=DAC, I=INPUT, O=OUTPUT e.g. **setMode("AADDIIOO")** configures all 
-eight pins with an unique function.
+A=ADC, D=DAC, I=INPUT, O=OUTPUT, T=THREEState 
+e.g. **setMode("AADDIIOT")** configures all eight pins with an unique function.
 The char array must be 8 characters long, other characters set that pin as not configured.
 The char array is not case sensitive.
 - **int setADCmode(uint8_t bitMask)** set pins == 1 to ADC mode (12 bits).
 - **int setDACmode(uint8_t bitMask)** set pins == 1 to DAC mode (12 bits).
 - **int setINPUTmode(uint8_t bitMask)** set pins == 1 to INPUT mode.
 - **int setOUTPUTmode(uint8_t bitMask)** set pins == 1 to OUTPUT mode.
+- **int setTHREESTATEmode(uint8_t bitMask)** set pins == 1 to Three State Output mode
 
 Configure detailed pin behaviour.
 
@@ -187,6 +192,16 @@ reference is selected.
 - **float getVref()** returns the current reference voltage.
 - **int setADCRange2x(bool flag)** Configures the ADC range 1x or 2x the Vref.
 - **int setDACRange2x(bool flag)** Configures the DAC range 1x or 2x the Vref.
+
+
+### General Control register
+
+See datasheet page 33 + 34
+
+- ** int enableADCBufferPreCharge(bool flag)**
+- ** int enableADCBuffer(bool flag)**
+- ** int enableIOLock(bool flag)**
+- ** int writeAllDacs(bool flag)**
 
 
 ### Analog IO
@@ -226,6 +241,9 @@ Might move to protected in the future.
 - **uint16_t readIORegister(uint8_t reg)**
 - **uint16_t readConfigRegister(uint8_t reg)**
 
+See datasheet or top of the AD5593R.cpp file for overview of 
+IO registers and CONFIG registers.
+
 
 ## Future
 
@@ -234,15 +252,14 @@ Might move to protected in the future.
 
 - improve documentation.
 - get hardware for testing.
-- verify (and fix) basic functions.
+- test, verify and fix all functions.
 - check and fix TODO's in code and documentation
 
 #### Should
 
-- add missing functionality (after basic functions confirmed OK).
+- does **setMode()** needs **G** flag for Ground via 85 kΩ.
+- add missing functionality.
 - **writeNOP()** + **readNOP()** what is the function of NOP register?
-- **GEN_CTRL_REG** Page 33 - bits 6789.
-- **ThreeState register** AD5593_IO_TS_CONFIG
 - error handling.
 
 #### Could
@@ -250,7 +267,7 @@ Might move to protected in the future.
 - logical group functionality (code / docs).
 - int getMode(char config[]);
   - uint8_t getADCmode(), returns bitMask
-  - getDACmode(), getINPUTMode(), getOUTPUTmode() idem.
+  - getDACmode(), getINPUTMode(), getOUTPUTmode() getTSmode() idem.
 - read multiple ADC in one call, page 25.
 - continuous ADC conversions.
 - add examples

@@ -67,7 +67,7 @@ uint8_t AD5593R::getAddress()
 //
 int AD5593R::setADCRange2x(bool flag)
 {
-  if (flag) _gain = 2; 
+  if (flag) _gain = 2;
   else      _gain = 1;
 
   uint16_t bitMask = readConfigRegister(AD5593_GEN_CTRL_REG);
@@ -87,6 +87,43 @@ int AD5593R::setDACRange2x(bool flag)
 
 ////////////////////////////////////////////////////////////
 //
+//  CONFIGURE GENERAL CONTROL
+//
+int AD5593R::enableADCBufferPreCharge(bool flag)
+{
+  uint16_t bitMask = readConfigRegister(AD5593_GEN_CTRL_REG);
+  if (flag) bitMask |= 0x0200;
+  else bitMask &= ~0x0200;
+  return writeRegister(AD5593_GEN_CTRL_REG, bitMask);
+}
+
+int AD5593R::enableADCBuffer(bool flag)
+{
+  uint16_t bitMask = readConfigRegister(AD5593_GEN_CTRL_REG);
+  if (flag) bitMask |= 0x0100;
+  else bitMask &= ~0x0100;
+  return writeRegister(AD5593_GEN_CTRL_REG, bitMask);
+}
+
+int AD5593R::enableIOLock(bool flag)
+{
+  uint16_t bitMask = readConfigRegister(AD5593_GEN_CTRL_REG);
+  if (flag) bitMask |= 0x0080;
+  else bitMask &= ~0x0080;
+  return writeRegister(AD5593_GEN_CTRL_REG, bitMask);
+}
+
+int AD5593R::writeAllDacs(bool flag)
+{
+  uint16_t bitMask = readConfigRegister(AD5593_GEN_CTRL_REG);
+  if (flag) bitMask |= 0x0040;
+  else bitMask &= ~0x0040;
+  return writeRegister(AD5593_GEN_CTRL_REG, bitMask);
+}
+
+
+////////////////////////////////////////////////////////////
+//
 //  MODE
 //
 int AD5593R::setMode(const char config[9])
@@ -97,6 +134,7 @@ int AD5593R::setMode(const char config[9])
   uint8_t bitMaskADC = 0x00;
   uint8_t bitMaskIn  = 0x00;
   uint8_t bitMaskOut = 0x00;
+  uint8_t bitMaskTS  = 0x00;
 
   //  parse configuration string.
   uint8_t bm = 0x01;
@@ -104,12 +142,19 @@ int AD5593R::setMode(const char config[9])
   {
     switch(config[i])
     {
+      //  ADC
       case 'a':
       case 'A': bitMaskADC |= bm; break;
+      //  DAC
       case 'd':
       case 'D': bitMaskDAC |= bm; break;
+      //  INPUT
       case 'i':
       case 'I': bitMaskIn  |= bm; break;
+      //  THREE STATE ==> output mode
+      case 't':
+      case 'T': bitMaskTS  |= bm; bitMaskOut |= bm; break;
+      //  OUTPUT
       case 'o':
       case 'O': bitMaskOut |= bm; break;
       default:  break;
@@ -121,6 +166,7 @@ int AD5593R::setMode(const char config[9])
   setDACmode(bitMaskDAC);
   setINPUTmode(bitMaskIn);
   setOUTPUTmode(bitMaskOut);
+  setTHREESTATEmode(bitMaskTS);
   return 0;
 }
 
@@ -148,11 +194,13 @@ int AD5593R::setOUTPUTmode(uint8_t bitMask)
   //  Page 26
   //  1's => OUTPUT
   return writeRegister(AD5593_GPIO_CONFIG, bitMask);
+}
 
-  //  not implemented yet (flag or 2nd bitmap?)
-  //  GPIO_OPENDRAIN_CONFIG  Page 26/42
-  //  set default values for output? write8(0x0000);
-  //  IO_TS_CONFIG           Page 42  3e bitMask?
+int AD5593R::setTHREESTATEmode(uint8_t bitMask)
+{
+  //  Page 26/43
+  //  1's => Three state OUTPUT
+  return writeRegister(AD5593_IO_TS_CONFIG, bitMask);
 }
 
 int AD5593R::setPULLDOWNmode(uint8_t bitMask)
@@ -252,13 +300,18 @@ float AD5593R::readTemperature()
   writeRegister(AD5593_ADC_SEQ, 0x0300);
   //  read one ADC conversion.
   uint16_t raw = readIORegister(AD5593_ADC_READ);
-  //  formulas page 19 refactored into one.
-  float gainVref = _gain * _Vref;
-  float temp = raw - (0.5 * 4095) / gainVref;
-  temp = temp / (2.654 * (2.5 / gainVref));
-  return temp + 25.0;
-  //  could be simplified to T = Ax + B (notes 12/3)
-  //  temp = -283.59 + raw / 6.635 * gainVref;
+  //  formulas page 19 refactored to minimize float math.
+  //  verified with datasheet indicative numbers.
+  //  645  => -40
+  //  1035 => +105
+  //  1084 => +125
+  return -283.59 + raw / 6.635 * _gain * _Vref;
+
+  //  formulas page 19 refactored into one
+  //  float gainVref = _gain * _Vref;
+  //  float temp = raw - (0.5 * 4095) / gainVref;
+  //  temp = temp / (2.654 * (2.5 / gainVref));
+  //  return temp + 25.0;
 }
 
 

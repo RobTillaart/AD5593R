@@ -26,8 +26,9 @@ void setup()
 
   Serial.println(AD.begin());
 
-  //  set pin 0,1,2 as ADC, pin 3 as DAC and pin 4,5,6,7 as OUTPUT
-  AD.setMode("AAADOOOO");
+  //  set pin 0,1,2 as ADC, pin 3 as DAC, 
+  //      pin 4,5,6 as OUTPUT, pin 7 as ThreeState (output)
+  AD.setMode("AAADOOOT");
 }
 
 

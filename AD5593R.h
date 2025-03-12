@@ -33,12 +33,14 @@ public:
   uint8_t  getAddress();
 
   //  MODE
-  //  A=ADC, D=DAC, I=INPUT, O=OUTPUT e.g. "AADDIIOO"
+  //  A=ADC, D=DAC, I=INPUT, O=OUTPUT, T=THREESTATE e.g. "AADDIIOT"
   int      setMode(const char config[9]);
   int      setADCmode(uint8_t bitMask);
   int      setDACmode(uint8_t bitMask);
   int      setINPUTmode(uint8_t bitMask);
   int      setOUTPUTmode(uint8_t bitMask);
+  int      setTHREESTATEmode(uint8_t bitMask);
+
 
   // PULL DOWN IO - 85 KOhm
   int      setPULLDOWNmode(uint8_t bitMask);
@@ -72,6 +74,14 @@ public:
   //  false = 1x Vref or true = 2x Vref.
   int      setADCRange2x(bool flag);
   int      setDACRange2x(bool flag);
+
+  //  GENERAL CONTROL
+  //  page 33
+  int      enableADCBufferPreCharge(bool flag);
+  int      enableADCBuffer(bool flag);
+  int      enableIOLock(bool flag);
+  //  page 34
+  int      writeAllDacs(bool flag);
 
 
   //  ANALOG IO
