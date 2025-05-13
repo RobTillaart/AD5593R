@@ -287,19 +287,36 @@ uint16_t AD5593R::readADC(uint8_t pin)
   //  0x0200 = REPeat bit
   //  0x0100 = TEMPerature include bit
   //  TODO  0x0000 or 0x0200?
-  writeRegister(AD5593_ADC_SEQ, 0x0200 | (1 << pin));
+  uint16_t pinmask = 1 << pin;
+  writeRegister(AD5593_ADC_SEQ, 0x0200 | pinmask);
   //  read one ADC conversion.
-  return readIORegister(AD5593_ADC_READ);
+  uint16_t raw = readIORegister(AD5593_ADC_READ);
+  //  four upper bits contain the PIN
+  //  if ((raw >> 12) != pin) error.
+  //  mask lower 12 bits.
+  raw &= 0x0FFF;
+  return raw;
 }
 
+//  TODO returns no meaningful values yet
+//  note: identical to readADC(8)
 float AD5593R::readTemperature()
 {
   //  page 19.
   //  0x0200 = REPeat bit
   //  0x0100 = TEMPerature include bit
-  writeRegister(AD5593_ADC_SEQ, 0x0300);
+  writeRegister(AD5593_ADC_SEQ, 0x0200 | 0x0100);
   //  read one ADC conversion.
   uint16_t raw = readIORegister(AD5593_ADC_READ);
+  //  if not temperature ADC
+  if ((raw & 0xF000) != 0x8000)
+  {
+    return -273.15;  //  0 Kelvin.
+  }
+  Serial.println(raw, HEX);
+  //  four upper bits contain the PIN
+  //  mask lower 12 bits.
+  raw &= 0x0FFF;
   //  formulas page 19 refactored to minimize float math.
   //  verified with datasheet indicative numbers.
   //  645  => -40

@@ -16,7 +16,7 @@ AD5593R AD(0x10);
 
 void setup()
 {
-  while(!Serial);
+  while (!Serial);
   Serial.begin(115200);
   Serial.println();
   Serial.println(__FILE__);
@@ -26,8 +26,14 @@ void setup()
 
   Wire.begin();
 
+  Serial.print("Connect: ");
+  Serial.println(AD.isConnected());
+  Serial.print("Address: ");
+  Serial.println(AD.getAddress(), HEX);
+
   //  set all eight pins to DAC mode.
   AD.setDACmode(0xFF);
+  AD.setLDACmode(0);
 }
 
 
@@ -35,7 +41,7 @@ void loop()
 {
   for (int pin = 0; pin < 8; pin++)
   {
-    Serial.print(AD.writeDAC(pin, (pin * 4095)/8 ));
+    Serial.print(AD.writeDAC(pin, (pin * 4095) / 8 ));
     Serial.print("\t");
   }
   Serial.println();
