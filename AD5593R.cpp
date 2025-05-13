@@ -253,7 +253,7 @@ uint16_t AD5593R::write8(uint8_t bitMask)
 
 uint16_t AD5593R::read8()
 {
-  return readIORegister(AD5593_GPIO_READ);
+  return readIORegister(AD5593_GPIO_READ) & 0xFF;
 }
 
 
@@ -277,7 +277,8 @@ uint16_t AD5593R::writeDAC(uint8_t pin, uint16_t value)
 uint16_t AD5593R::readDAC(uint8_t pin)
 {
   if (pin > 7) return AD5593R_PIN_ERROR;
-  return readIORegister(AD5593_DAC_READ(pin));
+  uint16_t raw = readIORegister(AD5593_DAC_READ(pin));
+  return raw;
 }
 
 uint16_t AD5593R::readADC(uint8_t pin)

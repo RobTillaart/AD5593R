@@ -14,7 +14,7 @@ AD5593R AD(0x10);
 
 void setup()
 {
-  while(!Serial);
+  while (!Serial);
   Serial.begin(115200);
   Serial.println();
   Serial.println(__FILE__);
@@ -31,7 +31,7 @@ void setup()
 
 void loop()
 {
-  Serial.println(AD.read8(), HEX);
+  Serial.println(AD.read8(), BIN);
   delay(1000);
 }
 
