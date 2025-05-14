@@ -28,7 +28,13 @@ void setup()
 
   //  set all eight pins to DAC mode.
   AD.setDACmode(0xFF);
+  //  use external reference
   AD.setExternalReference(true, 3.3);
+  //  do not double the output.
+  AD.setDACRange2x(false);
+  //  COPY input register direct to DAC
+  //  must be set after setExternalReference()
+  AD.setLDACmode(0);
 }
 
 
@@ -36,7 +42,7 @@ void loop()
 {
   for (int pin = 0; pin < 8; pin++)
   {
-    Serial.print(AD.writeDAC(pin, (pin * 4095)/8 ));
+    Serial.print(AD.writeDAC(pin, (pin * 4095)/7 ));
     Serial.print("\t");
   }
   Serial.println();

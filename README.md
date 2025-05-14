@@ -46,7 +46,7 @@ an external reference.
 The datasheet mentions a number of suitable external references which 
 include the AD780, AD1582, ADR431, REF193, and ADR391.
 
-As always, feedback is welcome.
+Feedback as always is welcome.
 
 Also if there is functionality missing, please open an issue on GitHub.
 
@@ -68,7 +68,7 @@ This library does **not** support the AD5592 / SPI version.
 - https://github.com/RobTillaart/MCP_DAC 10-12 bit, 1,2,4,8 channel ADC
 - https://github.com/RobTillaart/PCF8591 8 bit ADC + 1 bit DAC
 
-Where to buy (note it not the cheapest device)
+Where to buy
 
 - https://nl.aliexpress.com/item/1005005789989970.html
 - https://www.digikey.nl/en/products/detail/mikroelektronika/MIKROE-2690/7394022
@@ -77,6 +77,14 @@ Where to buy (note it not the cheapest device)
 ## Hardware
 
 Connections see datasheet, depends on packaging type.
+
+
+## Testing
+
+The library is tested (most parts) with an Arduino UNO and an IOMOD module (V1.0)
+from SuperHouse Automation Pty (Thanks!). See also issue #2.
+
+- https://github.com/SuperHouse/IOMOD
 
 
 ## I2C
@@ -89,12 +97,6 @@ It is possible to use the A0 line as a CS (chip select) line and configure all
 devices as 0x11. 
 By setting a single A0 line HIGH the related AD5593R device will be selected. 
 This works if you have enough IO pins. Alternative is I2C multiplexing see below.
-
-
-### I2C Performance
-
-The AD5593R supports standard mode (100 kHz) and fast mode (400 kHz).
-
 
 ### I2C multiplexing
 
@@ -112,6 +114,13 @@ Also note that switching between channels will slow down other devices
 too if they are behind the multiplexer.
 
 - https://github.com/RobTillaart/TCA9548
+
+
+### I2C Performance
+
+The AD5593R supports standard mode (100 kHz) and fast mode (400 kHz).
+
+Not tested.
 
 
 ## Interface
@@ -188,8 +197,8 @@ value of the individual pins.
 ### Vref Voltage reference
 
 - **int setExternalReference(bool flag, float Vref)** true = external reference,
-false = internal reference of 2.5 Volts. The Vref has no meaning when internal 
-reference is selected.
+false = internal reference of 2.5 Volts. The Vref parameter has no meaning when 
+internal reference is selected.
 - **float getVref()** returns the current reference voltage.
 - **int setADCRange2x(bool flag)** Configures the ADC range 1x or 2x the Vref.
 - **int setDACRange2x(bool flag)** Configures the DAC range 1x or 2x the Vref.
@@ -197,7 +206,7 @@ reference is selected.
 
 ### General Control register
 
-See datasheet page 33 + 34
+See datasheet page 33 + 34 (not tested)
 
 - ** int enableADCBufferPreCharge(bool flag)**
 - ** int enableADCBuffer(bool flag)**
@@ -215,17 +224,23 @@ Values above 4095 will be clipped to 4095.
 - **uint16_t readDAC(uint8_t pin)** returns current value of selected DAC.
 - **uint16_t readADC(uint8_t pin)** returns 12 bit value.
 - **uint16_t readTemperature()** Accuracy 3C over 5 samples averaged according datasheet.
-Should return value between −40 +105 (not accurate)
+Returns value in Celsius between −40 and +125 C.
 
-Note: readADC(8) returns the RAW temperature.
+Note: readADC(8) returns the RAW temperature reading, which is only 2 bytes.
+Can be converted to (integer) temperature by mapping.
+
+```cpp
+int Celsius = map(raw, 645, 1084, -40, 125);
+int Fahrenheit = map(raw, 645, 1084, -40, 257);
+```
 
 
 ### Power
 
-- **int powerDown()** switches of all functionality, Low power mode.
+- **int powerDown()** switches off all functionality, Low power mode.
 - **int wakeUp()** switches on all functionality.
-- **int powerDownDac(uint8_t pin)** disable single DAC
-- **int wakeUpDac(uint8_t pin)** enable singleDAC
+- **int powerDownDac(uint8_t pin)** disable a single DAC.
+- **int wakeUpDac(uint8_t pin)** enable a single DAC.
 
 
 ### Reset
@@ -254,39 +269,41 @@ IO registers and CONFIG registers.
 #### Must
 
 - improve documentation.
-- test, verify and fix all functions.
-- check and fix TODO's in code and documentation
+- verify and fix all functions.
 
 #### Should
 
-- does **setMode()** needs **G** flag for Ground via 85 kΩ.
-- add missing functionality.
+- add missing functionality upon request.
+- does **setMode()** needs **G** flag for Ground via 85 kΩ?
 - **writeNOP()** + **readNOP()** what is the function of NOP register?
-- error handling.
+- fix TODO's in code
+
 
 #### Could
 
-- logical group functionality (code / docs).
-- int getMode(char config[]);
-  - uint8_t getADCmode(), returns bitMask
-  - getDACmode(), getINPUTMode(), getOUTPUTmode() getTSmode() idem.
-- read multiple ADC in one call, page 25.
-- continuous ADC conversions.
 - add examples
   - example with A0 line as ChipSelect.
   - example LDAC hold / release.
   - example performance measurements
-- support external reset pin - user can do this relative easy.
-  - effect on internals of library?
+- logical group functionality (code / readme.md).
+- error handling
+  - **int getLastError()**
+- investigate **int getMode(char config[])** needed?
+  - **uint8_t getADCmode()**, returns bitMask
+  - getDACmode(), getINPUTMode(), getOUTPUTmode() getTSmode() idem.
+- investigate read multiple ADC in one call, page 25.
+  - need to know how many are configured 
+  - array with 8 values?
+- continuous ADC conversions?
 - name the magic numbers / masks in code.
-
 
 #### Wont (for now).
 
 - extend unit tests - needs mock-up device.
 - **int writeDACVoltage(pin, voltage)** - depends on Vref.
-- **float readADCVoltage()** 
-
+- **float readADCVoltage()** - depends on Vref.
+- support external reset pin - user can do this relative easy.
+  - effect on internals of library?
 
 ## Support
 

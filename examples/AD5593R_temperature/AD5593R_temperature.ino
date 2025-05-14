@@ -28,7 +28,6 @@ void setup()
   Serial.print("Address: ");
   Serial.println(AD.getAddress(), HEX);
 
-  //  (for now external Vref does not work).
   //  use internal Vref 2.5V
   AD.setExternalReference(false, 5.0);
 

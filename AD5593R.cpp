@@ -268,8 +268,6 @@ uint16_t AD5593R::writeDAC(uint8_t pin, uint16_t value)
   {
     value = 0x0FFF;
   }
-  //  TODO do we need this or?
-  //  return writeRegister(AD5593_DAC_WRITE(pin), value | 0x8000 | (pin << 12));
   return writeRegister(AD5593_DAC_WRITE(pin), value);
 }
 
@@ -299,7 +297,6 @@ uint16_t AD5593R::readADC(uint8_t pin)
   return raw;
 }
 
-//  TODO returns no meaningful values yet
 //  note: identical to readADC(8)
 float AD5593R::readTemperature()
 {
@@ -314,14 +311,15 @@ float AD5593R::readTemperature()
   {
     return -273.15;  //  0 Kelvin.
   }
-  //  four upper bits contain the PIN
+  //  four upper bits contain the PIN (8)
   //  mask lower 12 bits.
   raw &= 0x0FFF;
   //  formulas page 19 refactored to minimize float math.
   //  verified with datasheet indicative numbers.
-  //  645  => -40
-  //  1035 => +105
-  //  1084 => +125
+  //  RAW     CELSIUS   FAHRENHEIT
+  //  645  => -40       -40
+  //  1035 => +105      +221
+  //  1084 => +125      +257
   return -283.59 + raw / 6.635 * _gain * _Vref;
 
   //  formulas page 19 refactored into one
@@ -329,6 +327,11 @@ float AD5593R::readTemperature()
   //  float temp = raw - (0.5 * 4095) / gainVref;
   //  temp = temp / (2.654 * (2.5 / gainVref));
   //  return temp + 25.0;
+  //
+  //  return -283.59 + raw / 6.635 * _gain * _Vref;
+  //  division can be optimized away.
+  //  return -283.59 + raw * 0.1507159 * _gain * _Vref;
+  //         gain only if == 2.
 }
 
 
