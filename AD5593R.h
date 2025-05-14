@@ -49,6 +49,7 @@ public:
   //  mode == 0 => COPY input register direct to DAC. (default)
   //  mode == 1 => HOLD in input registers.
   //  mode == 2 => RELEASE all input registers to DAC simultaneously.
+  //  must be set AFTER setExternalReference
   int setLDACmode(uint8_t mode);
 
   //  OPENDRAIN

@@ -161,7 +161,8 @@ The char array is not case sensitive.
 Configure detailed pin behaviour.
 
 - **int setPULLDOWNmode(uint8_t bitMask)** 85 kOhm pull down to GND.
-- **int setLDACmode(uint8_t mode)** See table below
+- **int setLDACmode(uint8_t mode)** See table below. 
+Must be set after the **setExternalReference()**.
 - **int setOpenDrainMode(uint8_t bitMask)** see datasheet page 26.
 
 |  mode  |  meaning  |
