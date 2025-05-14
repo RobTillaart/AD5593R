@@ -28,17 +28,20 @@ void setup()
   Serial.print("Address: ");
   Serial.println(AD.getAddress(), HEX);
 
-  //  set all eight pins to ADC mode.
-  //  AD.setADCmode(0xFF);
+  //  (for now external Vref does not work).
+  //  use internal Vref 2.5V
+  AD.setExternalReference(false, 5.0);
+
+  Serial.println("TEMPERATURE");
 }
 
 
 void loop()
 {
+  //  RAW temperature
+  //  Serial.print(AD.readADC(8));
+  //  Serial.print("\t");
   Serial.println(AD.readTemperature());
-  Serial.println();
-  Serial.println(AD.readADC(8));
-  Serial.println();
   delay(1000);
 }
 

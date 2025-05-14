@@ -207,7 +207,7 @@ See datasheet page 33 + 34
 
 ### Analog IO
 
-The pins used must be set in the proper DAC or ADC mode.  
+The pins 0..7 used must be set in the proper DAC or ADC mode.  
 The user needs to handle the pin administration.
 
 - **uint16_t writeDAC(uint8_t pin, uint16_t value)** value must be 0..4095 (12 bit). 
@@ -216,6 +216,8 @@ Values above 4095 will be clipped to 4095.
 - **uint16_t readADC(uint8_t pin)** returns 12 bit value.
 - **uint16_t readTemperature()** Accuracy 3C over 5 samples averaged according datasheet.
 Should return value between −40 +105 (not accurate)
+
+Note: readADC(8) returns the RAW temperature.
 
 
 ### Power
@@ -236,7 +238,7 @@ Note the Vref is reset to internal 2.5V and gain is set to 1x.
 
 Full control of the registers, read the datasheet for the details.
 
-Might move to protected in the future.
+Will move to protected in the future.
 
 - **int writeRegister(uint8_t reg, uint16_t data)**
 - **uint16_t readIORegister(uint8_t reg)**

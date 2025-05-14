@@ -283,7 +283,8 @@ uint16_t AD5593R::readDAC(uint8_t pin)
 
 uint16_t AD5593R::readADC(uint8_t pin)
 {
-  if (pin > 7) return AD5593R_PIN_ERROR;
+  //  allow pin 8 for raw temperature
+  if (pin > 8) return AD5593R_PIN_ERROR;
   //  add all to the sequence including temperature.
   //  0x0200 = REPeat bit
   //  0x0100 = TEMPerature include bit
@@ -313,7 +314,6 @@ float AD5593R::readTemperature()
   {
     return -273.15;  //  0 Kelvin.
   }
-  Serial.println(raw, HEX);
   //  four upper bits contain the PIN
   //  mask lower 12 bits.
   raw &= 0x0FFF;
