@@ -251,7 +251,6 @@ IO registers and CONFIG registers.
 #### Must
 
 - improve documentation.
-- get hardware for testing.
 - test, verify and fix all functions.
 - check and fix TODO's in code and documentation
 
@@ -276,6 +275,8 @@ IO registers and CONFIG registers.
   - example performance measurements
 - support external reset pin - user can do this relative easy.
   - effect on internals of library?
+- name the magic numbers / masks in code.
+
 
 #### Wont (for now).
 

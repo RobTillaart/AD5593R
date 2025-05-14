@@ -232,7 +232,6 @@ int AD5593R::setOpenDrainMode(uint8_t bitMask)
 uint16_t AD5593R::write1(uint8_t pin, uint8_t value)
 {
   if (pin > 7) return AD5593R_PIN_ERROR;
-  //  TODO does the read works?
   uint16_t bitMask = readConfigRegister(AD5593_GPIO_OUTPUT);
   if (value == LOW) bitMask &= ~(1 << pin);
   else              bitMask |= (1 << pin);
@@ -278,6 +277,7 @@ uint16_t AD5593R::readDAC(uint8_t pin)
 {
   if (pin > 7) return AD5593R_PIN_ERROR;
   uint16_t raw = readIORegister(AD5593_DAC_READ(pin));
+  raw &= 0x0FFF;
   return raw;
 }
 
@@ -287,7 +287,6 @@ uint16_t AD5593R::readADC(uint8_t pin)
   //  add all to the sequence including temperature.
   //  0x0200 = REPeat bit
   //  0x0100 = TEMPerature include bit
-  //  TODO  0x0000 or 0x0200?
   uint16_t pinmask = 1 << pin;
   writeRegister(AD5593_ADC_SEQ, 0x0200 | pinmask);
   //  read one ADC conversion.
