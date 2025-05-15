@@ -22,10 +22,6 @@ The AD5593R is an IO device with 8 channels that can be configured as ADC
 DAC or GPIO.
 In that sense it is one of the most flexible IO expanders on the market.
 
-The device is **NOT** tested with hardware yet, and the software tests are
-very limited. (Proof is in the pudding test). 
-So all feedback is welcome, please open an issue on GitHub or open an PR.
-
 Both the ADC and DAC are 12 bit, giving 4096 steps, from 0 to 4095.
 The ADC unit is multiplexed over different channels/pins and is rated
 with a conversion time of 2 us. _Note: this is not confirmed yet_.
@@ -46,7 +42,7 @@ an external reference.
 The datasheet mentions a number of suitable external references which 
 include the AD780, AD1582, ADR431, REF193, and ADR391.
 
-Feedback as always is welcome.
+Feedback as always is welcome. Please open an issue on GitHub or open an PR.
 
 Also if there is functionality missing, please open an issue on GitHub.
 
