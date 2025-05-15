@@ -36,7 +36,7 @@ void setup()
   AD.setDACRange2x(false);
   //  COPY input register direct to DAC
   //  must be set after setExternalReference()
-  AD.setLDACmode(0);
+  AD.setLDACmode(AD5593R_LDAC_DIRECT);
 }
 
 

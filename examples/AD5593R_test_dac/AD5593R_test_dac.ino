@@ -31,6 +31,7 @@ void setup()
   Serial.print("Address: ");
   Serial.println(AD.getAddress(), HEX);
 
+
   //  set all eight pins to DAC mode.
   AD.setDACmode(0xFF);
   //  use internal Vref 2.5V
@@ -39,7 +40,18 @@ void setup()
   AD.setDACRange2x(false);
   //  COPY input register direct to DAC
   //  must be set after setExternalReference()
-  AD.setLDACmode(0);
+  AD.setLDACmode(AD5593R_LDAC_DIRECT);
+
+
+  //  READ BACK default values
+  for (int pin = 0; pin < 8; pin++)
+  {
+    //  expect all zero's after full power down.
+    Serial.print(AD.readDAC(pin), HEX);
+    Serial.print("\t");
+  }
+  Serial.println();
+  Serial.println();
 }
 
 

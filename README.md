@@ -227,9 +227,10 @@ Values above 4095 will be clipped to 4095.
 Returns value in Celsius between −40 and +125 C.
 
 Note: readADC(8) returns the RAW temperature reading, which is only 2 bytes.
-Can be converted to (integer) temperature by mapping.
+Can be converted to (integer) temperature by mapping. 
 
 ```cpp
+//  note depends on ADC _gain = 1x or 2x
 int Celsius = map(raw, 645, 1084, -40, 125);
 int Fahrenheit = map(raw, 645, 1084, -40, 257);
 ```
@@ -285,6 +286,11 @@ IO registers and CONFIG registers.
   - example with A0 line as ChipSelect.
   - example LDAC hold / release.
   - example performance measurements
+  - example reset
+- voltage interfaces
+  - **float getADCVoltage(uint8_t pin)**
+  - **int setDACVoltage(uint8_tpin, float value)**
+  - **float getDacVoltage(uint8_t pin)**
 - logical group functionality (code / readme.md).
 - error handling
   - **int getLastError()**
@@ -292,6 +298,7 @@ IO registers and CONFIG registers.
   - **uint8_t getADCmode()**, returns bitMask
   - getDACmode(), getINPUTMode(), getOUTPUTmode() getTSmode() idem.
 - investigate read multiple ADC in one call, page 25.
+  - readADCmask(uint8_t mask, uint16_t array8);
   - need to know how many are configured 
   - array with 8 values?
 - continuous ADC conversions?

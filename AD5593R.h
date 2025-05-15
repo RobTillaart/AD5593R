@@ -21,6 +21,13 @@
 #define AD5593R_OK                  0x0000
 #define AD5593R_PIN_ERROR           0xFF81
 #define AD5593R_I2C_ERROR           0xFF82
+#define AD5593R_LDAC_ERROR          0xFF83
+
+
+//  LDAC MODI
+const uint8_t AD5593R_LDAC_DIRECT  = 0;
+const uint8_t AD5593R_LDAC_HOLD    = 1;
+const uint8_t AD5593R_LDAC_RELEASE = 2;
 
 
 class AD5593R
@@ -34,6 +41,7 @@ public:
 
   //  MODE
   //  A=ADC, D=DAC, I=INPUT, O=OUTPUT, T=THREESTATE e.g. "AADDIIOT"
+  //  (datasheet) last set mode bit counts.
   int      setMode(const char config[9]);
   int      setADCmode(uint8_t bitMask);
   int      setDACmode(uint8_t bitMask);
@@ -46,11 +54,12 @@ public:
   int      setPULLDOWNmode(uint8_t bitMask);
 
   //  LATCH (dac)
-  //  mode == 0 => COPY input register direct to DAC. (default)
-  //  mode == 1 => HOLD in input registers.
-  //  mode == 2 => RELEASE all input registers to DAC simultaneously.
+  //  mode                    meaning
+  //  AD5593R_LDAC_DIRECT  => COPY input register direct to DAC. (default)
+  //  AD5593R_LDAC_HOLD    => HOLD in input registers.
+  //  AD5593R_LDAC_RELEASE => RELEASE all input registers to DAC simultaneously.
   //  must be set AFTER setExternalReference
-  int setLDACmode(uint8_t mode);
+  int      setLDACmode(uint8_t mode);
 
   //  OPENDRAIN
   //  page 26 - output mode - pull up resistor needed.
@@ -72,7 +81,7 @@ public:
   int      setExternalReference(bool flag, float Vref);
   float    getVref();
   //  configure ADC / DAC range
-  //  false = 1x Vref or true = 2x Vref.
+  //  false == 1x Vref or true == 2x Vref.
   int      setADCRange2x(bool flag);
   int      setDACRange2x(bool flag);
 
@@ -87,6 +96,7 @@ public:
 
   //  ANALOG IO
   uint16_t writeDAC(uint8_t pin, uint16_t value);
+  //  reads back last written value
   uint16_t readDAC(uint8_t pin);
   uint16_t readADC(uint8_t pin);
   //  temperature page 19.  indicative, accuracy 3C over 5 samples averaged.
@@ -114,8 +124,8 @@ public:
 protected:
   uint8_t _address;
   int     _error;
-  float   _Vref = 2.5;
-  int     _gain = 1;  //  for temperature.
+  float   _Vref;
+  int     _gain;
 
   TwoWire*  _wire;
 };

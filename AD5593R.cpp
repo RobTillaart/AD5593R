@@ -27,6 +27,7 @@
 
 #define AD5593_SW_RESET                 0x0F
 
+
 //  IO REGISTERS
 #define AD5593_DAC_WRITE(x)             (0x10 + (x))
 #define AD5593_ADC_READ                 0x40
@@ -38,9 +39,11 @@
 
 AD5593R::AD5593R(const uint8_t deviceAddress, TwoWire *wire)
 {
-  _address    = deviceAddress;
-  _wire       = wire;
-  _error      = AD5593R_OK;
+  _address = deviceAddress;
+  _wire    = wire;
+  _error   = AD5593R_OK;
+  _Vref    = 2.5;
+  _gain    = 1;
 }
 
 bool AD5593R::begin()
@@ -67,6 +70,7 @@ uint8_t AD5593R::getAddress()
 //
 int AD5593R::setADCRange2x(bool flag)
 {
+  //  remember for readTemperature().
   if (flag) _gain = 2;
   else      _gain = 1;
 
@@ -173,12 +177,14 @@ int AD5593R::setMode(const char config[9])
 int AD5593R::setADCmode(uint8_t bitMask)
 {
   //  Page 25 / 32
+  //  1's => ADC
   return writeRegister(AD5593_ADC_CONFIG, bitMask);
 }
 
 int AD5593R::setDACmode(uint8_t bitMask)
 {
   //  Page 35
+  //  1's => DAC
   return writeRegister(AD5593_DAC_CONFIG, bitMask);
 }
 
@@ -212,7 +218,10 @@ int AD5593R::setPULLDOWNmode(uint8_t bitMask)
 int AD5593R::setLDACmode(uint8_t mode)
 {
   //  page 24
-  if (mode > 2) return 0;
+  if (mode > AD5593R_LDAC_RELEASE)
+  {
+    return AD5593R_LDAC_ERROR;
+  }
   return writeRegister(AD5593_LDAC_MODE, mode);
 }
 
@@ -275,6 +284,8 @@ uint16_t AD5593R::readDAC(uint8_t pin)
 {
   if (pin > 7) return AD5593R_PIN_ERROR;
   uint16_t raw = readIORegister(AD5593_DAC_READ(pin));
+  //  if ((raw >> 12) != pin) error.
+  //  remove four upper bits, contain the pin
   raw &= 0x0FFF;
   return raw;
 }
@@ -290,9 +301,8 @@ uint16_t AD5593R::readADC(uint8_t pin)
   writeRegister(AD5593_ADC_SEQ, 0x0200 | pinmask);
   //  read one ADC conversion.
   uint16_t raw = readIORegister(AD5593_ADC_READ);
-  //  four upper bits contain the PIN
   //  if ((raw >> 12) != pin) error.
-  //  mask lower 12 bits.
+  //  remove four upper bits, contain the pin
   raw &= 0x0FFF;
   return raw;
 }
@@ -311,8 +321,7 @@ float AD5593R::readTemperature()
   {
     return -273.15;  //  0 Kelvin.
   }
-  //  four upper bits contain the PIN (8)
-  //  mask lower 12 bits.
+  //  remove four upper bits, contain the pin
   raw &= 0x0FFF;
   //  formulas page 19 refactored to minimize float math.
   //  verified with datasheet indicative numbers.
@@ -329,9 +338,11 @@ float AD5593R::readTemperature()
   //  return temp + 25.0;
   //
   //  return -283.59 + raw / 6.635 * _gain * _Vref;
-  //  division can be optimized away.
-  //  return -283.59 + raw * 0.1507159 * _gain * _Vref;
-  //         gain only if == 2.
+  //
+  //  float division can be optimized away.
+  //  float tmp = -283.59 + raw * 0.1507159 * _Vref;
+  //  if (_gain == 2) tmp *= 2;
+  //  return tmp;
 }
 
 
